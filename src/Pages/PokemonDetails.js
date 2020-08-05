@@ -17,11 +17,9 @@ class PokemonDetails extends Component {
   componentDidMount () {
     axios.get('https://pokeapi.co/api/v2/pokemon/' + this.props.match.params.name)
       .then(res => {
-        console.log(res.data)
         const { name, types, sprites } = res.data
         this.setState({ pokemonData: { name, types, sprites } })
       }).catch(err => console.error(err))
-
     const { search } = this.props.location
     if (search) {
       this.getPokemonTypeData(queryString.parse(search).type)
@@ -34,6 +32,7 @@ class PokemonDetails extends Component {
       if (search) {
         this.getPokemonTypeData(queryString.parse(search).type)
       } else {
+        // reset Pokemon type data
         this.setState({ modalPokemonTypeContent: [], modalPokemonType: '' })
       }
     }
