@@ -47,7 +47,7 @@ export default class Home extends Component {
   }
 
   render () {
-    const { loadedPokemonItems, paginationList } = this.state
+    const { loadedPokemonItems, paginationList, paginationActive } = this.state
     return (
       <div>
         <h1>Pokemon browse!</h1>
@@ -56,12 +56,12 @@ export default class Home extends Component {
             <li key={pokemonItem.name}> <Link to={'pokemonDetails/' + pokemonItem.name}>{pokemonItem.name}</Link> </li>
           )}
         </ul>}
-        {paginationList.length && <ul>
+        {paginationList.length && paginationActive && <ul>
           {paginationList.map(num =>
             <li key={num} onClick={() => this.handlePaginationClick(num)}>{num}</li>
           )}
         </ul>}
-        <button onClick={this.handleShowAllClick}>SHOW ALL</button>
+        {paginationActive && <button onClick={this.handleShowAllClick}>SHOW ALL</button>}
       </div>
     )
   }
