@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import './Home.scss'
 
 export default class Home extends Component {
   constructor (props) {
@@ -57,7 +58,7 @@ export default class Home extends Component {
   handleShowAllClick = () => {
     this.apiListingBuilder({ showAll: true })
       .then(res => {
-        this.setState({ pokemonItems: res.data.results, paginationActive: null })
+        this.setState({ pokemonItems: res.data.results, paginationActive: null, searchValue: '' })
       }).catch(err => console.error(err))
   }
 
@@ -79,26 +80,34 @@ export default class Home extends Component {
     this.setState({ pokemonItems: searchedPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(searchedPokemonItems.length) })
   }
 
+  handleSearchReset () {
+    this.setState({ pokemonItems: this.allPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(this.allPokemonItemsCount), searchValue: '' })
+  }
+
   render () {
     const { pokemonItems, paginationList, paginationActive, searchValue } = this.state
     return (
-      <div>
+      <div className="container">
         <h1>Pokemon browse!</h1>
-        <section>
+        <section className="searchBox">
           <input type="text" value={searchValue} onChange={this.handleSearchChange} />
           <button onClick={this.handleSearchClick.bind(this)}>Search</button>
+          <span className="searchBox__Reset" onClick={this.handleSearchReset.bind(this)}>Reset</span>
         </section>
-        {pokemonItems.length && <ul>
+        {pokemonItems.length && <ul className="pokemonList">
           {pokemonItems.map(pokemonItem =>
             <li key={pokemonItem.name}> <Link to={'pokemonDetails/' + pokemonItem.name}>{pokemonItem.name}</Link> </li>
           )}
         </ul>}
-        {paginationList.length && paginationActive && <ul>
-          {paginationList.map(num =>
-            <li key={num} onClick={() => this.handlePaginationClick(num)}>Page {num}</li>
-          )}
-        </ul>}
-        {paginationActive && <button onClick={this.handleShowAllClick}>SHOW ALL</button>}
+        {paginationList.length && paginationActive && <>
+          <span>Pages: </span>
+          <ul className="paginationList">
+            {paginationList.map(num =>
+              <li key={num} className={num === paginationActive ? 'active' : ''} onClick={() => this.handlePaginationClick(num)}>{num}</li>
+            )}
+          </ul>
+        </>}
+        {paginationActive && <button className="btnShowAll" onClick={this.handleShowAllClick}>SHOW ALL</button>}
       </div>
     )
   }
