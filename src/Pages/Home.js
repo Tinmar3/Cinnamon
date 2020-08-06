@@ -11,7 +11,8 @@ export default class Home extends Component {
       paginationList: [],
       paginationActive: 1,
       searchValue: '',
-      showLoader: false
+      showLoader: false,
+      errorMessage: false
     }
     this.ITEMS_LIMIT_PER_PAGE = 100
     this.allPokemonItemsCount = null
@@ -24,7 +25,10 @@ export default class Home extends Component {
         .then(res => {
           this.allPokemonItemsCount = res.data.count
           this.setState({ pokemonItems: res.data.results, paginationList: this.getPaginationList(this.allPokemonItemsCount), showLoader: false })
-        }).catch(err => console.error(err))
+        }).catch(err => {
+          console.error(err)
+          this.setState({ errorMessage: true })
+        })
     })
   }
 
@@ -50,7 +54,10 @@ export default class Home extends Component {
           this.apiListingBuilder({ paginationNumber })
             .then(res => {
               this.setState({ pokemonItems: res.data.results, paginationActive: paginationNumber, showLoader: false })
-            }).catch(err => console.error(err))
+            }).catch(err => {
+              console.error(err)
+              this.setState({ errorMessage: true })
+            })
         })
       } else {
         const offset = this.ITEMS_LIMIT_PER_PAGE * (paginationNumber - 1)
@@ -65,7 +72,10 @@ export default class Home extends Component {
       this.apiListingBuilder({ showAll: true })
         .then(res => {
           this.setState({ pokemonItems: res.data.results, paginationActive: null, searchValue: '', showLoader: false })
-        }).catch(err => console.error(err))
+        }).catch(err => {
+          console.error(err)
+          this.setState({ errorMessage: true })
+        })
     })
   }
 
@@ -80,7 +90,8 @@ export default class Home extends Component {
         const response = await this.apiListingBuilder({ showAll: true })
         this.allPokemonItems = response.data.results
       } catch ({ response }) {
-        console.err(response)
+        console.error(response)
+        this.setState({ errorMessage: true })
       }
     }
     const searchedPokemonItems = this.allPokemonItems.filter(pokemonItem => pokemonItem.name.includes(searchValue))
@@ -92,7 +103,7 @@ export default class Home extends Component {
   }
 
   render () {
-    const { pokemonItems, paginationList, paginationActive, searchValue, showLoader } = this.state
+    const { pokemonItems, paginationList, paginationActive, searchValue, showLoader, errorMessage } = this.state
     return (
       <div className="container">
         <h1>Pokemon browse!</h1>
@@ -102,13 +113,14 @@ export default class Home extends Component {
           <span className="searchBox__Reset" onClick={this.handleSearchReset.bind(this)}>Reset</span>
         </section>
         <div className="pokemonList__Wrap">
-          {!showLoader ? pokemonItems.length && <ul className="pokemonList">
+          {!showLoader ? !!pokemonItems.length && <ul className="pokemonList">
             {pokemonItems.map(pokemonItem =>
               <li key={pokemonItem.name}> <Link to={'pokemonDetails/' + pokemonItem.name}>{pokemonItem.name}</Link> </li>
             )}
           </ul> : <div className="loader"></div>}
+          {!pokemonItems.length && searchValue && <p>Your search has no results, please try again.</p>}
         </div>
-        {paginationList.length && paginationActive && <>
+        {!!paginationList.length && paginationActive && <>
           <span>Pages: </span>
           <ul className="paginationList">
             {paginationList.map(num =>
@@ -117,6 +129,7 @@ export default class Home extends Component {
           </ul>
         </>}
         {paginationActive && <button className="btnShowAll" onClick={this.handleShowAllClick}>SHOW ALL</button>}
+        {errorMessage && <p className="error">Something went wrong, please try again.</p>}
       </div>
     )
   }
