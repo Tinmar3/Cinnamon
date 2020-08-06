@@ -12,7 +12,8 @@ export default class Home extends Component {
       paginationActive: 1,
       searchValue: '',
       showLoader: false,
-      errorMessage: false
+      errorMessage: false,
+      showAll: false
     }
     this.ITEMS_LIMIT_PER_PAGE = 100
     this.allPokemonItemsCount = null
@@ -71,7 +72,8 @@ export default class Home extends Component {
     this.setState({ showLoader: true }, () => {
       this.apiListingBuilder({ showAll: true })
         .then(res => {
-          this.setState({ pokemonItems: res.data.results, paginationActive: null, searchValue: '', showLoader: false })
+          this.allPokemonItems = res.data.results
+          this.setState({ pokemonItems: this.allPokemonItems, paginationActive: null, searchValue: '', showLoader: false, showAll: true })
         }).catch(err => {
           console.error(err)
           this.setState({ errorMessage: true })
@@ -95,22 +97,22 @@ export default class Home extends Component {
       }
     }
     const searchedPokemonItems = this.allPokemonItems.filter(pokemonItem => pokemonItem.name.includes(searchValue))
-    this.setState({ pokemonItems: searchedPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(searchedPokemonItems.length) })
+    this.setState({ pokemonItems: searchedPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(searchedPokemonItems.length), showAll: false })
   }
 
-  handleSearchReset () {
-    this.setState({ pokemonItems: this.allPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(this.allPokemonItemsCount), searchValue: '' })
+  handleReset = () => {
+    this.setState({ pokemonItems: this.allPokemonItems.slice(0, 100), paginationActive: 1, paginationList: this.getPaginationList(this.allPokemonItemsCount), searchValue: '', showAll: false })
   }
 
   render () {
-    const { pokemonItems, paginationList, paginationActive, searchValue, showLoader, errorMessage } = this.state
+    const { pokemonItems, paginationList, paginationActive, searchValue, showLoader, errorMessage, showAll } = this.state
     return (
       <div className="container">
         <h1>Pokemon browse!</h1>
         <section className="searchBox">
           <input type="text" value={searchValue} onChange={this.handleSearchChange} />
           <button onClick={this.handleSearchClick.bind(this)}>Search</button>
-          <span className="searchBox__Reset" onClick={this.handleSearchReset.bind(this)}>Reset</span>
+          <span className="searchBox__Reset" onClick={this.handleReset.bind(this)}>Reset</span>
         </section>
         <div className="pokemonList__Wrap">
           {!showLoader ? !!pokemonItems.length && <ul className="pokemonList">
@@ -128,7 +130,7 @@ export default class Home extends Component {
             )}
           </ul>
         </>}
-        {paginationActive && <button className="btnShowAll" onClick={this.handleShowAllClick}>SHOW ALL</button>}
+        {<button className="btnShowAll" onClick={showAll ? this.handleReset : this.handleShowAllClick}>{showAll ? 'SHOW LESS' : 'SHOW ALL'}</button>}
         {errorMessage && <p className="error">Something went wrong, please try again.</p>}
       </div>
     )
