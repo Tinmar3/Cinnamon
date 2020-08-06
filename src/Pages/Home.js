@@ -10,7 +10,8 @@ export default class Home extends Component {
       pokemonItems: [],
       paginationList: [],
       paginationActive: 1,
-      searchValue: ''
+      searchValue: '',
+      showLoader: false
     }
     this.ITEMS_LIMIT_PER_PAGE = 100
     this.allPokemonItemsCount = null
@@ -18,11 +19,13 @@ export default class Home extends Component {
   }
 
   componentDidMount () {
-    this.apiListingBuilder()
-      .then(res => {
-        this.allPokemonItemsCount = res.data.count
-        this.setState({ pokemonItems: res.data.results, paginationList: this.getPaginationList(this.allPokemonItemsCount) })
-      }).catch(err => console.error(err))
+    this.setState({ showLoader: true }, () => {
+      this.apiListingBuilder()
+        .then(res => {
+          this.allPokemonItemsCount = res.data.count
+          this.setState({ pokemonItems: res.data.results, paginationList: this.getPaginationList(this.allPokemonItemsCount), showLoader: false })
+        }).catch(err => console.error(err))
+    })
   }
 
   apiListingBuilder ({ paginationNumber, showAll } = {}) {
@@ -43,10 +46,12 @@ export default class Home extends Component {
     const { paginationActive, searchValue } = this.state
     if (paginationNumber !== paginationActive) {
       if (!searchValue) {
-        this.apiListingBuilder({ paginationNumber })
-          .then(res => {
-            this.setState({ pokemonItems: res.data.results, paginationActive: paginationNumber })
-          }).catch(err => console.error(err))
+        this.setState({ showLoader: true }, () => {
+          this.apiListingBuilder({ paginationNumber })
+            .then(res => {
+              this.setState({ pokemonItems: res.data.results, paginationActive: paginationNumber, showLoader: false })
+            }).catch(err => console.error(err))
+        })
       } else {
         const offset = this.ITEMS_LIMIT_PER_PAGE * (paginationNumber - 1)
         const pokemonItems = this.allPokemonItems.filter(pokemonItem => pokemonItem.name.includes(searchValue)).slice(offset, offset + this.ITEMS_LIMIT_PER_PAGE)
@@ -56,10 +61,12 @@ export default class Home extends Component {
   }
 
   handleShowAllClick = () => {
-    this.apiListingBuilder({ showAll: true })
-      .then(res => {
-        this.setState({ pokemonItems: res.data.results, paginationActive: null, searchValue: '' })
-      }).catch(err => console.error(err))
+    this.setState({ showLoader: true }, () => {
+      this.apiListingBuilder({ showAll: true })
+        .then(res => {
+          this.setState({ pokemonItems: res.data.results, paginationActive: null, searchValue: '', showLoader: false })
+        }).catch(err => console.error(err))
+    })
   }
 
   handleSearchChange = event => {
@@ -85,7 +92,7 @@ export default class Home extends Component {
   }
 
   render () {
-    const { pokemonItems, paginationList, paginationActive, searchValue } = this.state
+    const { pokemonItems, paginationList, paginationActive, searchValue, showLoader } = this.state
     return (
       <div className="container">
         <h1>Pokemon browse!</h1>
@@ -94,11 +101,13 @@ export default class Home extends Component {
           <button onClick={this.handleSearchClick.bind(this)}>Search</button>
           <span className="searchBox__Reset" onClick={this.handleSearchReset.bind(this)}>Reset</span>
         </section>
-        {pokemonItems.length && <ul className="pokemonList">
-          {pokemonItems.map(pokemonItem =>
-            <li key={pokemonItem.name}> <Link to={'pokemonDetails/' + pokemonItem.name}>{pokemonItem.name}</Link> </li>
-          )}
-        </ul>}
+        <div className="pokemonList__Wrap">
+          {!showLoader ? pokemonItems.length && <ul className="pokemonList">
+            {pokemonItems.map(pokemonItem =>
+              <li key={pokemonItem.name}> <Link to={'pokemonDetails/' + pokemonItem.name}>{pokemonItem.name}</Link> </li>
+            )}
+          </ul> : <div className="loader"></div>}
+        </div>
         {paginationList.length && paginationActive && <>
           <span>Pages: </span>
           <ul className="paginationList">

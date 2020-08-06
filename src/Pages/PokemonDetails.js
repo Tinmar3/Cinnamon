@@ -11,20 +11,26 @@ class PokemonDetails extends Component {
     this.state = {
       pokemonData: {},
       modalPokemonTypeContent: [],
-      modalPokemonType: ''
+      modalPokemonType: '',
+      showLoader: false,
+      showModalLoader: false,
+      mainImagePresent: undefined
     }
+    this.placeholderURL = 'https://lh3.googleusercontent.com/proxy/Nlz6TyhYz0SSOkk_PLsHTIUyxzyAoKHJBsbg-QiFK8O0C2I5gtXaogt9AwplFjT-Xzefkmh2iB9Kt6dzMThKUAZtLCRPTLUa-VezcZ1e7y0887o'
   }
 
   componentDidMount () {
-    axios.get('https://pokeapi.co/api/v2/pokemon/' + this.props.match.params.name)
-      .then(res => {
-        const { name, types, sprites } = res.data
-        this.setState({ pokemonData: { name, types, sprites } })
-      }).catch(err => console.error(err))
-    const { search } = this.props.location
-    if (search) {
-      this.getPokemonTypeData(queryString.parse(search).type)
-    }
+    this.setState({ showLoader: true }, () => {
+      axios.get('https://pokeapi.co/api/v2/pokemon/' + this.props.match.params.name)
+        .then(res => {
+          const { name, types, sprites } = res.data
+          this.setState({ pokemonData: { name, types, sprites } })
+        }).catch(err => console.error(err))
+      const { search } = this.props.location
+      if (search) {
+        this.getPokemonTypeData(queryString.parse(search).type)
+      }
+    })
   }
 
   componentDidUpdate (prevProps) {
@@ -37,22 +43,40 @@ class PokemonDetails extends Component {
         this.setState({ modalPokemonTypeContent: [], modalPokemonType: '' })
       }
     }
+    const { mainImagePresent, pokemonData } = this.state
+    if (typeof mainImagePresent === 'undefined') {
+      const mainImage = pokemonData.sprites && pokemonData.sprites.front_default
+      if (mainImage) {
+        this.setState({ mainImagePresent: true })
+      } else if (Object.keys(pokemonData).length !== 0 && !mainImage) {
+        this.setState({ mainImagePresent: false })
+      }
+    }
   }
 
   getPokemonTypeData (type) {
-    return axios.get('https://pokeapi.co/api/v2/type/' + type)
-      .then(res => {
-        this.setState({ modalPokemonTypeContent: res.data.pokemon, modalPokemonType: res.data.name })
-      }).catch(err => console.error(err))
+    this.setState({ showModalLoader: true }, () => {
+      return axios.get('https://pokeapi.co/api/v2/type/' + type)
+        .then(res => {
+          this.setState({ modalPokemonTypeContent: res.data.pokemon, modalPokemonType: res.data.name, showModalLoader: false })
+        }).catch(err => console.error(err))
+    })
+  }
+
+  hideLoader = () => {
+    this.setState({ showLoader: false })
   }
 
   render () {
-    const { pokemonData, modalPokemonType, modalPokemonTypeContent } = this.state
-    console.log(pokemonData)
+    const { pokemonData, modalPokemonType, modalPokemonTypeContent, showLoader, showModalLoader, mainImagePresent } = this.state
     return (
       <div className="container">
+        {showLoader && <div className="loader__Wrap"><div className="loader"></div></div>}
         <h1><Link to={'/'}>&lt;</Link> { pokemonData.name }</h1>
-        {pokemonData.sprites ? <img className="pokemonDetailsImg" src={pokemonData.sprites.front_default} alt={pokemonData.name} /> : <img className="pokemonDetailsImgPlacehold" src="https://lh3.googleusercontent.com/proxy/Nlz6TyhYz0SSOkk_PLsHTIUyxzyAoKHJBsbg-QiFK8O0C2I5gtXaogt9AwplFjT-Xzefkmh2iB9Kt6dzMThKUAZtLCRPTLUa-VezcZ1e7y0887o" alt="Pokemon placeholder" /> }
+        {(mainImagePresent === true) &&
+          <img className="pokemonDetailsImg" src={pokemonData.sprites.front_default} alt={pokemonData.name} onLoad={this.hideLoader} /> }
+        {(mainImagePresent === false) &&
+          <img className="pokemonDetailsImgPlacehold" src={this.placeholderURL} alt="Pokemon placeholder" onLoad={this.hideLoader} /> }
         <ul className="pokemonDetailsList">
           <li>
             <h5>Types</h5>
@@ -61,12 +85,13 @@ class PokemonDetails extends Component {
         </ul>
         {modalPokemonType && <div className="modal">
           <div className="modal__Inner">
-            <Link className="modal__Close" to={ this.props.history.location.pathname }>X</Link>
-            <h2>{ 'All ' + modalPokemonType + ' type Pokemons' }</h2>
-            <ul>{modalPokemonTypeContent && modalPokemonTypeContent.map(typeItem => <li key={ typeItem.pokemon.name }>{ typeItem.pokemon.name }</li>)}</ul>
+            {showModalLoader ? <div className="loader"></div> : <>
+              <Link className="modal__Close" to={ this.props.history.location.pathname }>X</Link>
+              <h2>{ 'All ' + modalPokemonType + ' type Pokemons' }</h2>
+              <ul>{modalPokemonTypeContent && modalPokemonTypeContent.map(typeItem => <li key={ typeItem.pokemon.name }>{ typeItem.pokemon.name }</li>)}</ul>
+            </>}
           </div>
         </div>}
-
       </div>
     )
   }
