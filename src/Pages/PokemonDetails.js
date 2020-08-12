@@ -17,7 +17,7 @@ class PokemonDetails extends Component {
       mainImagePresent: undefined,
       errorMessage: false
     }
-    this.placeholderURL = 'https://lh3.googleusercontent.com/proxy/Nlz6TyhYz0SSOkk_PLsHTIUyxzyAoKHJBsbg-QiFK8O0C2I5gtXaogt9AwplFjT-Xzefkmh2iB9Kt6dzMThKUAZtLCRPTLUa-VezcZ1e7y0887o'
+    this.placeholderURL = 'https://lh3.googleusercontent.com/proxy/QGPIYwd8T5e4L0dGscyhLQDzNgbg5K18eWRvaJifZuf56abi1AlXHKaXhskVEkmuPUi0KRNWLdF7p-ELvq3ZYileETaEDPDiXtimbHsccZvPnC_YMgcZRwifHFftM-C6cg'
   }
 
   componentDidMount () {
@@ -83,7 +83,7 @@ class PokemonDetails extends Component {
         {(mainImagePresent === true) &&
           <img className="pokemonDetailsImg" src={pokemonData.sprites.front_default} alt={pokemonData.name} onLoad={this.hideLoader} /> }
         {(mainImagePresent === false) &&
-          <img className="pokemonDetailsImgPlacehold" src={this.placeholderURL} alt="Pokemon placeholder" onLoad={this.hideLoader} /> }
+          <img className="pokemonDetailsImgPlacehold" src={this.placeholderURL} alt="Pokemon placeholder" onLoad={this.hideLoader} onError={this.hideLoader} /> }
         <ul className="pokemonDetailsList">
           <li>
             <h5>Types</h5>
